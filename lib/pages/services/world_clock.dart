@@ -14,33 +14,25 @@ class WorldClock {
 
   Future<void> getTime() async {
     try {
+      // 1. Fetch data from timeapi.io
       http.Response response = await http
-          .get(Uri.parse('https://worldtimeapi.org/api/timezone/$url'))
+          .get(Uri.parse('https://timeapi.io/api/Time/current/zone?timeZone=$url'))
           .timeout(const Duration(seconds: 10));
 
       Map data = jsonDecode(response.body);
 
-      // 1. Get the initial UTC time
-      String datetime = data['datetime'];
-      String offset = data['utc_offset']; // e.g., "-05:00"
-
-      DateTime now = DateTime.parse(datetime);
-
-      // 2. Extract the hours from the offset string (position 1 to 3)
-      int offsetHours = int.parse(offset.substring(1, 3));
-
-      // 3. Check the sign (+ or -) and adjust the time accordingly
-      if (offset.startsWith('+')) {
-        now = now.add(Duration(hours: offsetHours));
-      } else {
-        now = now.subtract(Duration(hours: offsetHours));
-      }
+      // 2. Extract the time directly from the 'time' field
+      // The API returns time in 'HH:mm' format
+      String rawTime = data['time']; // e.g., "22:09"
+      
+      // 3. Convert to formatted time (e.g., 10:09 PM)
+      // Since timeapi.io already accounts for offset, we just need to format it
+      DateTime now = DateTime.parse(data['dateTime']);
+      time = DateFormat.jm().format(now);
 
       debugPrint('Full Data: $data');
-      debugPrint('The Offset is: $offset');
+      debugPrint('The Time is: $time');
 
-      // 4. Set the formatted time
-      time = DateFormat.jm().format(now);
     } catch (e) {
       debugPrint('caught error: $e');
       time = 'Retry connection';
